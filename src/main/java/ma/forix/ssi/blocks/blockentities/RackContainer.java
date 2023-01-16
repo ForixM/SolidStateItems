@@ -1,7 +1,7 @@
 package ma.forix.ssi.blocks.blockentities;
 
+import ma.forix.ssi.Registration;
 import ma.forix.ssi.Ssi;
-import ma.forix.ssi.blocks.SsiBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
@@ -21,7 +21,7 @@ public class RackContainer extends AbstractContainerMenu {
     private IItemHandler playerInventory;
 
     public RackContainer(int windowId, BlockPos pos, Inventory playerInventory, Player player) {
-        super(SsiBlockEntities.RACK_CONTAINER.get(), windowId);
+        super(Registration.RACK_CONTAINER.get(), windowId);
         blockEntity = player.getCommandSenderWorld().getBlockEntity(pos);
         this.player = player;
         this.playerInventory = new InvWrapper(playerInventory);
@@ -98,6 +98,6 @@ public class RackContainer extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player pPlayer) {
-        return stillValid(ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos()), player, SsiBlocks.RACK_BLOCK.get());
+        return stillValid(ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos()), player, Registration.RACK_BLOCK.get());
     }
 }

@@ -1,10 +1,7 @@
 package ma.forix.ssi;
 
 import com.mojang.logging.LogUtils;
-import ma.forix.ssi.blocks.SsiBlocks;
 import ma.forix.ssi.blocks.blockentities.RackScreen;
-import ma.forix.ssi.blocks.blockentities.SsiBlockEntities;
-import ma.forix.ssi.items.SsiItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -50,9 +47,10 @@ public class Ssi {
 
         // Register the Deferred Register to the mod event bus so blocks get registered
 //        BLOCKS.register(modEventBus);
-        SsiItems.RegisterItems(modEventBus);
-        SsiBlocks.RegisterBlocks(modEventBus);
-        SsiBlockEntities.RegisterBlockEntities(modEventBus);
+//        SsiItems.RegisterItems(modEventBus);
+//        SsiBlocks.RegisterBlocks(modEventBus);
+//        SsiBlockEntities.RegisterBlockEntities(modEventBus);
+        Registration.Register(modEventBus);
         // Register the Deferred Register to the mod event bus so items get registered
 //        ITEMS.register(modEventBus);
 
@@ -63,8 +61,8 @@ public class Ssi {
     private void commonSetup(final FMLCommonSetupEvent event) {
         // Some common setup code
         event.enqueueWork(() -> {
-            MenuScreens.register(SsiBlockEntities.RACK_CONTAINER.get(), RackScreen::new);
-            ItemBlockRenderTypes.setRenderLayer(SsiBlocks.RACK_BLOCK.get(), RenderType.translucent());
+            MenuScreens.register(Registration.RACK_CONTAINER.get(), RackScreen::new);
+            ItemBlockRenderTypes.setRenderLayer(Registration.RACK_BLOCK.get(), RenderType.translucent());
         });
     }
 

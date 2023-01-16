@@ -1,5 +1,6 @@
 package ma.forix.ssi.blocks.blockentities;
 
+import ma.forix.ssi.Registration;
 import ma.forix.ssi.items.Drive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -63,7 +64,7 @@ public class RackBlockEntity extends BlockEntity {
     private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
 
     public RackBlockEntity(BlockPos pPos, BlockState pBlockState) {
-        super(SsiBlockEntities.RACK_BLOCK_ENTITY.get(), pPos, pBlockState);
+        super(Registration.RACK_BLOCK_ENTITY.get(), pPos, pBlockState);
     }
 
     private boolean hasDrive = false;
