@@ -2,6 +2,7 @@ package ma.forix.ssi;
 
 import com.mojang.logging.LogUtils;
 import ma.forix.ssi.blocks.blockentities.RackScreen;
+import ma.forix.ssi.blocks.blockentities.TerminalScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -62,6 +63,7 @@ public class Ssi {
         // Some common setup code
         event.enqueueWork(() -> {
             MenuScreens.register(Registration.RACK_CONTAINER.get(), RackScreen::new);
+            MenuScreens.register(Registration.TERMINAL_CONTAINER.get(), TerminalScreen::new);
             ItemBlockRenderTypes.setRenderLayer(Registration.RACK_BLOCK.get(), RenderType.translucent());
         });
     }

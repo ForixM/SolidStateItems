@@ -1,8 +1,9 @@
 package ma.forix.ssi;
 
+import ma.forix.ssi.blocks.Cable;
 import ma.forix.ssi.blocks.RackBlock;
-import ma.forix.ssi.blocks.blockentities.RackBlockEntity;
-import ma.forix.ssi.blocks.blockentities.RackContainer;
+import ma.forix.ssi.blocks.TerminalBlock;
+import ma.forix.ssi.blocks.blockentities.*;
 import ma.forix.ssi.items.Drive;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
@@ -40,6 +41,8 @@ public class Registration {
 
     //BLOCKS
     public static final RegistryObject<RackBlock> RACK_BLOCK = registerBlock("rack_block", RackBlock::new);
+    public static final RegistryObject<TerminalBlock> TERMINAL_BLOCK = registerBlock("terminal", TerminalBlock::new);
+    public static final RegistryObject<Cable> CABLE = registerBlock("cable", Cable::new);
 
 
     //ITEMS
@@ -49,10 +52,16 @@ public class Registration {
     //BLOCK ENTITIES
     public static final RegistryObject<BlockEntityType<RackBlockEntity>> RACK_BLOCK_ENTITY = BLOCKS_ENTITIES.register("rack_block",
             () -> BlockEntityType.Builder.of(RackBlockEntity::new, RACK_BLOCK.get()).build(null));
+    public static final RegistryObject<BlockEntityType<TerminalBlockEntity>> TERMINAL_BLOCK_ENTITY = BLOCKS_ENTITIES.register("terminal",
+            () -> BlockEntityType.Builder.of(TerminalBlockEntity::new, TERMINAL_BLOCK.get()).build(null));
+    public static final RegistryObject<BlockEntityType<CableBlockEntity>> CABLE_BLOCK_ENTITY = BLOCKS_ENTITIES.register("cable",
+            () -> BlockEntityType.Builder.of(CableBlockEntity::new, CABLE.get()).build(null));
 
 
     //CONTAINERS
     public static final RegistryObject<MenuType<RackContainer>> RACK_CONTAINER = CONTAINERS.register("rack_block", () -> IForgeMenuType.create(((windowId, inv, data) ->
             new RackContainer(windowId, data.readBlockPos(), inv, inv.player))));
+    public static final RegistryObject<MenuType<TerminalContainer>> TERMINAL_CONTAINER = CONTAINERS.register("terminal", () -> IForgeMenuType.create(((windowId, inv, data) ->
+            new TerminalContainer(windowId, data.readBlockPos(), inv, inv.player))));
 
 }

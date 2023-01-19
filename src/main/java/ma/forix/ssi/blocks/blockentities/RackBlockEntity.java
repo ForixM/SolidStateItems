@@ -1,11 +1,13 @@
 package ma.forix.ssi.blocks.blockentities;
 
 import ma.forix.ssi.Registration;
+import ma.forix.ssi.blocks.Networkable;
 import ma.forix.ssi.items.Drive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
@@ -16,7 +18,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RackBlockEntity extends BlockEntity {
+public class RackBlockEntity extends Networkable {
 
     private final ItemStackHandler itemHandler = createHandler();
 
@@ -69,42 +71,44 @@ public class RackBlockEntity extends BlockEntity {
 
     private boolean hasDrive = false;
 
-    public void tickServer(){
+    @Override
+    public void tickServer(Level level){
+        super.tickServer(level);
         ItemStack drive = itemHandler.getStackInSlot(4);
 
         if (!drive.isEmpty()){
-            if (!hasDrive){
-                CompoundTag tag = drive.getOrCreateTag();
-                if (tag.contains("Inventory")){
-                    itemHandler.deserializeNBT(tag.getCompound("Inventory"));
-                }
-                for (String key : tag.getAllKeys()) {
-                    try {
-                        int i = Integer.parseInt(key);
-                        ItemStack item = ItemStack.of(tag.getCompound(key));
-                        itemHandler.setStackInSlot(i, item);
-                    } catch (Exception e){
-                        System.err.println("error: "+e.getMessage());
-                    }
-                }
-                hasDrive = true;
-            } else {
-                CompoundTag tag = new CompoundTag();
-
-                for (int i = 0; i < 4; i++) {
-                    ItemStack item = itemHandler.getStackInSlot(i);
-                    if (!item.isEmpty()) {
-                        tag.put(Integer.toString(i), item.serializeNBT());
-                    }
-                }
-                drive.setTag(tag);
-            }
+            processDrive(drive);
         } else {
             for (int i = 0; i < 4; i++){
                 itemHandler.setStackInSlot(i, ItemStack.EMPTY);
             }
-
             hasDrive = false;
+        }
+    }
+
+    private void processDrive(ItemStack drive){
+        if (!hasDrive){
+            CompoundTag tag = drive.getOrCreateTag();
+            for (String key : tag.getAllKeys()) {
+                try {
+                    int i = Integer.parseInt(key);
+                    ItemStack item = ItemStack.of(tag.getCompound(key));
+                    itemHandler.setStackInSlot(i, item);
+                } catch (Exception e){
+                    System.err.println("error: "+e.getMessage());
+                }
+            }
+            hasDrive = true;
+        } else {
+            CompoundTag tag = new CompoundTag();
+
+            for (int i = 0; i < 4; i++) {
+                ItemStack item = itemHandler.getStackInSlot(i);
+                if (!item.isEmpty()) {
+                    tag.put(Integer.toString(i), item.serializeNBT());
+                }
+            }
+            drive.setTag(tag);
         }
     }
 }

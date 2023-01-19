@@ -3,17 +3,16 @@ package ma.forix.ssi.blocks.blockentities;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import ma.forix.ssi.Ssi;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
-public class RackScreen extends AbstractContainerScreen<RackContainer> {
+public class TerminalScreen extends AbstractContainerScreen<TerminalContainer> {
 
-    private final ResourceLocation GUI = new ResourceLocation(Ssi.MODID, "textures/gui/feur_gui.png");
+    private final ResourceLocation GUI = new ResourceLocation(Ssi.MODID, "textures/gui/terminal_gui.png");
 
-    public RackScreen(RackContainer pMenu, Inventory pPlayerInventory, Component pTitle) {
+    public TerminalScreen(TerminalContainer pMenu, Inventory pPlayerInventory, Component pTitle) {
         super(pMenu, pPlayerInventory, pTitle);
     }
 
