@@ -2,10 +2,8 @@ package ma.forix.ssi.network;
 
 import ma.forix.ssi.blocks.Networkable;
 import ma.forix.ssi.blocks.blockentities.RackBlockEntity;
-import ma.forix.ssi.blocks.blockentities.TerminalBlockEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,9 +89,11 @@ public class StateNetwork {
     }
 
     public void mergeNetworks(StateNetwork network){
-        for (Networkable element : network.getElements()) {
-            element.updateNetwork(this);
-            elements.add(element);
+        if (network != null) {
+            for (Networkable element : network.getElements()) {
+                element.updateNetwork(this);
+                elements.add(element);
+            }
         }
     }
 }

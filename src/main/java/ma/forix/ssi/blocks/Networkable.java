@@ -32,21 +32,24 @@ public abstract class Networkable extends BlockEntity {
             List<Networkable> nearbyNetworks = new ArrayList<>();
             for (final var direction : Direction.values()) {
                 BlockEntity be = level.getBlockEntity(this.worldPosition.relative(direction));
-                if (be instanceof Networkable el) {
+                if (be instanceof Networkable el && el.network != null) {
                     nearbyNetworks.add(el);
 //                    this.network = el.getNetwork();
                 }
             }
 
-            if (nearbyNetworks.size() > 1){
-                for (int i = 1; i < nearbyNetworks.size(); i++) {
-                    nearbyNetworks.get(0).getNetwork().mergeNetworks(nearbyNetworks.get(i).getNetwork());
+            if (nearbyNetworks.size() > 1) {
+                if (nearbyNetworks.get(0).getNetwork() != null){
+                    for (int i = 1; i < nearbyNetworks.size(); i++) {
+                        nearbyNetworks.get(0).getNetwork().mergeNetworks(nearbyNetworks.get(i).getNetwork());
+                    }
                 }
                 this.network = nearbyNetworks.get(0).getNetwork();
             }
             if (nearbyNetworks.size() >= 1){
                 this.network = nearbyNetworks.get(0).getNetwork();
-                this.network.AddElement(this);
+                if (this.network != null)
+                    this.network.AddElement(this);
             } else {
                 this.network = new StateNetwork(this);
             }

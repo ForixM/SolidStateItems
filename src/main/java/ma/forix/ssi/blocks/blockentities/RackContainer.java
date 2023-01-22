@@ -28,11 +28,15 @@ public class RackContainer extends AbstractContainerMenu {
 
         if (blockEntity != null){
             blockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(h -> {
-                addSlot(new SlotItemHandler(h, 0, 8, 30));
-                addSlot(new SlotItemHandler(h, 1, 26, 30));
-                addSlot(new SlotItemHandler(h, 2, 8, 48));
-                addSlot(new SlotItemHandler(h, 3, 26, 48));
-                addSlot(new SlotItemHandler(h, 4, 105, 10));
+                int x = 0, y = 0;
+                for (int j = 0; j < 4; j++) {
+                    for (int i = 0; i < 2; i++) {
+                        addSlot(new SlotItemHandler(h, i+2*j, 71+x, 8+y));
+                        x+=18;
+                    }
+                    x=0;
+                    y+=18;
+                }
             });
         }
         layoutPlayerInventorySlots(8, 84);

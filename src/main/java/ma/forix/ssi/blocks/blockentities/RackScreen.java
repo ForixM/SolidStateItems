@@ -11,7 +11,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class RackScreen extends AbstractContainerScreen<RackContainer> {
 
-    private final ResourceLocation GUI = new ResourceLocation(Ssi.MODID, "textures/gui/feur_gui.png");
+    private final ResourceLocation GUI = new ResourceLocation(Ssi.MODID, "textures/gui/rack_gui.png");
 
     public RackScreen(RackContainer pMenu, Inventory pPlayerInventory, Component pTitle) {
         super(pMenu, pPlayerInventory, pTitle);

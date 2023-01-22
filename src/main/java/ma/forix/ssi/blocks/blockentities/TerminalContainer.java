@@ -1,6 +1,7 @@
 package ma.forix.ssi.blocks.blockentities;
 
 import ma.forix.ssi.Registration;
+import ma.forix.ssi.slot.CustomSlotItemHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -19,6 +20,7 @@ public class TerminalContainer extends AbstractContainerMenu {
     private Player player;
     private IItemHandler playerInventory;
 
+    @SuppressWarnings("removal")
     public TerminalContainer(int windowId, BlockPos pos, Inventory playerInventory, Player player) {
         super(Registration.TERMINAL_CONTAINER.get(), windowId);
         blockEntity = player.getCommandSenderWorld().getBlockEntity(pos);
@@ -27,10 +29,10 @@ public class TerminalContainer extends AbstractContainerMenu {
 
         if (blockEntity != null){
             blockEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(h -> {
-                addSlot(new SlotItemHandler(h, 0, 8, 30));
-                addSlot(new SlotItemHandler(h, 1, 26, 30));
-                addSlot(new SlotItemHandler(h, 2, 8, 48));
-                addSlot(new SlotItemHandler(h, 3, 26, 48));
+                addSlot(new CustomSlotItemHandler(h, 0, 8, 30));
+                addSlot(new CustomSlotItemHandler(h, 1, 26, 30));
+                addSlot(new CustomSlotItemHandler(h, 2, 8, 48));
+                addSlot(new CustomSlotItemHandler(h, 3, 26, 48));
             });
         }
         layoutPlayerInventorySlots(8, 84);

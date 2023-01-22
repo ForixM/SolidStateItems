@@ -5,19 +5,24 @@ import ma.forix.ssi.blocks.Networkable;
 import ma.forix.ssi.items.Drive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.Registry;
+import net.minecraft.nbt.*;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class TerminalBlockEntity extends Networkable {
     private final ItemStackHandler itemHandler = createHandler();
@@ -28,10 +33,133 @@ public class TerminalBlockEntity extends Networkable {
     }
 
     private ItemStackHandler createHandler() {
-        return new ItemStackHandler(5){
+        return new ItemStackHandler(4){
             @Override
             protected void onContentsChanged(int slot) {
                 setChanged();
+            }
+
+            @Override
+            protected int getStackLimit(int slot, @NotNull ItemStack stack) {
+                return super.getStackLimit(slot, stack);
+            }
+
+            private ItemStack mergeOrNull(CompoundTag tag, ItemStack stack){
+                System.out.println("stack to merge: "+stack);
+                for (String key : tag.getAllKeys()) {
+                    ItemStack istack = ItemStack.of(tag.getCompound(key));
+                    System.out.println("stack found: "+istack);
+                    if (istack.sameItem(stack)){
+                        istack.grow(stack.getCount());
+                        tag.put(key, istack.serializeNBT());
+                        return istack;
+                    }
+                }
+                return null;
+            }
+
+            @SuppressWarnings("removal")
+            @Override
+            public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+                System.out.println("item inserted, slot=" + slot + ", stack=" + stack + ", simulate=" + simulate);
+                if (!level.isClientSide()) //slot, stack, simulate=true
+                {
+                    RackBlockEntity rack = network.getType(RackBlockEntity.class);
+                    if (rack != null){
+                        rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
+                            for (int i = 0; i < h.getSlots(); i++) {
+                                ItemStack drive = h.getStackInSlot(i);
+                                if (!drive.isEmpty()) {
+                                    CompoundTag tag = drive.getOrCreateTag();
+                                    ItemStack merged = mergeOrNull(tag, stack);
+                                    if (merged == null) {
+                                        Set<String> keys = tag.getAllKeys();
+                                        if (keys.size() < Drive.CAPACITY) {
+                                            int index = 0;
+                                            while (tag.contains(Integer.toString(index))) {
+                                                index++;
+                                            }
+                                            ResourceLocation res = Registry.ITEM.getKey(stack.getItem());
+                                            CompoundTag itemTag = new CompoundTag();
+                                            int prevCount = 0;
+                                            if (tag.contains(res.toString())) {
+                                                CompoundTag subTag = tag.getCompound(res.toString());
+                                                prevCount = subTag.getInt("count");
+                                            }
+                                            itemTag.putInt("count", stack.getCount() + prevCount);
+                                            if (stack.getTag() != null)
+                                                itemTag.put("tag", stack.getTag());
+                                            tag.put(res.toString(), itemTag);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+                //Base code slightly modified
+                if (stack.isEmpty())
+                    return ItemStack.EMPTY;
+
+                if (!isItemValid(slot, stack))
+                    return stack;
+
+                validateSlotIndex(slot);
+
+                ItemStack existing = this.stacks.get(slot);
+
+                if (!existing.isEmpty()){
+                    if (!ItemHandlerHelper.canItemStacksStack(stack, existing))
+                        return stack;
+                }
+
+                if (!simulate){
+                    if (existing.isEmpty()){
+                        this.stacks.set(slot, stack);
+                    } else {
+                        existing.grow(stack.getCount());
+                    }
+                    onContentsChanged(slot);
+                }
+                return ItemStack.EMPTY;
+
+//                return super.insertItem(slot, stack, simulate);
+            }
+
+            @SuppressWarnings("removal")
+            @Override
+            public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+                if (!level.isClientSide() && !simulate) //slot, amount extracted, simulate=false
+                {
+                    System.out.println("Item extracted, slot=" + slot + ", amout=" + amount + ", simulate=" + simulate);
+                    RackBlockEntity rack = network.getType(RackBlockEntity.class);
+                    if (rack != null){
+                        rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
+                            int am = Math.min(amount, 64);
+                            for (int i = 0; i < h.getSlots();i++){
+                                ItemStack drive = h.getStackInSlot(i);
+                                if (!drive.isEmpty()) {
+                                    CompoundTag tag = drive.getOrCreateTag();
+                                    ItemStack toExtract = getStackInSlot(slot);
+                                    String key = Registry.ITEM.getKey(toExtract.getItem()).toString();
+                                    if (tag.contains(key)) {
+                                        CompoundTag itemTag = (CompoundTag) tag.get(key);
+                                        int savedCount = itemTag.getInt("count");
+                                        if (savedCount == am) {
+                                            tag.remove(key);
+                                        } else {
+                                            itemTag.putInt("count", (savedCount - am));
+                                            tag.put(key, itemTag);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+                return super.extractItem(slot, amount, simulate);
             }
         };
     }
@@ -45,7 +173,18 @@ public class TerminalBlockEntity extends Networkable {
         return super.getCapability(cap, side);
     }
 
-    private boolean hasDrive = false;
+    private ItemStack getConvertibleTag(String id, CompoundTag tag){
+        CompoundTag converted = new CompoundTag();
+        converted.putString("id", id);
+        converted.putByte("Count", (byte)1);
+        if (tag.contains("tag")){
+            converted.put("tag", tag.get("tag"));
+        }
+
+        ItemStack stack = ItemStack.of(converted);
+        stack.setCount(tag.getInt("count"));
+        return stack;
+    }
 
     @SuppressWarnings("removal")
     @Override
@@ -54,42 +193,46 @@ public class TerminalBlockEntity extends Networkable {
         RackBlockEntity rack = network.getType(RackBlockEntity.class);
         if (rack != null){
             rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
-                ItemStack drive = h.getStackInSlot(4);
-                if (!drive.isEmpty()){
-                    if (!hasDrive){
+                List<ItemStack> items = new ArrayList<>();
+                boolean foundDisk = false;
+                for (int slot = 0; slot < h.getSlots(); slot++){
+                    ItemStack drive = h.getStackInSlot(slot);
+                    if (!drive.isEmpty()){
+                        foundDisk = true;
                         CompoundTag tag = drive.getOrCreateTag();
                         for (String key : tag.getAllKeys()) {
-                            try {
-                                int i = Integer.parseInt(key);
-                                ItemStack item = ItemStack.of(tag.getCompound(key));
-                                itemHandler.setStackInSlot(i, item);
-                            } catch (Exception e){
-                                System.err.println("error: "+e.getMessage());
+                            ItemStack stack = getConvertibleTag(key, tag.getCompound(key));
+                            int i;
+                            for (i = 0; i < items.size(); i++) {
+                                if (items.get(i).sameItem(stack)){
+                                    items.get(i).grow(stack.getCount());
+                                    break;
+                                }
+                            }
+                            if (i == items.size()){
+                                items.add(stack);
                             }
                         }
-                        hasDrive = true;
-                    } else {
-                        CompoundTag tag = new CompoundTag();
-                        for (int i = 0; i < 4; i++) {
-                            ItemStack item = itemHandler.getStackInSlot(i);
-                            if (!item.isEmpty()) {
-                                tag.put(Integer.toString(i), item.serializeNBT());
-                            }
-                        }
-                        drive.setTag(tag);
                     }
-                } else {
-                    for (int i = 0; i < 4; i++){
+                }
+                if (!foundDisk){
+                    for (int i = 0; i < itemHandler.getSlots(); i++){
                         itemHandler.setStackInSlot(i, ItemStack.EMPTY);
                     }
-                    hasDrive = false;
+                } else {
+                    int i = 0;
+                    for (int a = 0; a < itemHandler.getSlots(); a++){
+                        itemHandler.setStackInSlot(a, ItemStack.EMPTY);
+                    }
+                    for (ItemStack item : items) {
+                        itemHandler.setStackInSlot(i++, item);
+                    }
                 }
             });
         } else {
-            for (int i = 0; i < 4; i++){
+            for (int i = 0; i < itemHandler.getSlots(); i++){
                 itemHandler.setStackInSlot(i, ItemStack.EMPTY);
             }
-            hasDrive = false;
         }
     }
 }
