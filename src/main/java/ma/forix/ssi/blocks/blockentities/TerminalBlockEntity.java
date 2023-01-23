@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TerminalBlockEntity extends Networkable {
     private final ItemStackHandler itemHandler = createHandler();
@@ -33,7 +34,7 @@ public class TerminalBlockEntity extends Networkable {
     }
 
     private ItemStackHandler createHandler() {
-        return new ItemStackHandler(4){
+        return new ItemStackHandler(16){
             @Override
             protected void onContentsChanged(int slot) {
                 setChanged();
@@ -45,13 +46,15 @@ public class TerminalBlockEntity extends Networkable {
             }
 
             private ItemStack mergeOrNull(CompoundTag tag, ItemStack stack){
-                System.out.println("stack to merge: "+stack);
                 for (String key : tag.getAllKeys()) {
-                    ItemStack istack = ItemStack.of(tag.getCompound(key));
-                    System.out.println("stack found: "+istack);
+                    System.out.println("key: "+key+", stack: "+stack);
+                    CompoundTag itemTag = tag.getCompound(key);
+                    ItemStack istack = getConvertibleTag(key, itemTag);
                     if (istack.sameItem(stack)){
-                        istack.grow(stack.getCount());
-                        tag.put(key, istack.serializeNBT());
+                        int prevCount = itemTag.getInt("count");
+                        itemTag.putInt("count", prevCount+stack.getCount());
+//                        istack.grow(stack.getCount());
+//                        tag.put(key, istack.serializeNBT());
                         return istack;
                     }
                 }
@@ -61,7 +64,7 @@ public class TerminalBlockEntity extends Networkable {
             @SuppressWarnings("removal")
             @Override
             public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-                System.out.println("item inserted, slot=" + slot + ", stack=" + stack + ", simulate=" + simulate);
+                System.out.println("item inserted, slot=" + slot + ", stack=" + stack + ", simulate=" + simulate + ", client side: "+level.isClientSide());
                 if (!level.isClientSide()) //slot, stack, simulate=true
                 {
                     RackBlockEntity rack = network.getType(RackBlockEntity.class);
@@ -90,9 +93,11 @@ public class TerminalBlockEntity extends Networkable {
                                             if (stack.getTag() != null)
                                                 itemTag.put("tag", stack.getTag());
                                             tag.put(res.toString(), itemTag);
+                                            System.out.println("written tag: "+tag);
                                             break;
                                         }
                                     }
+                                    break;
                                 }
                             }
                         });
@@ -146,7 +151,7 @@ public class TerminalBlockEntity extends Networkable {
                                     if (tag.contains(key)) {
                                         CompoundTag itemTag = (CompoundTag) tag.get(key);
                                         int savedCount = itemTag.getInt("count");
-                                        if (savedCount == am) {
+                                        if (savedCount <= am) {
                                             tag.remove(key);
                                         } else {
                                             itemTag.putInt("count", (savedCount - am));
@@ -159,7 +164,44 @@ public class TerminalBlockEntity extends Networkable {
                         });
                     }
                 }
-                return super.extractItem(slot, amount, simulate);
+                if (slot < getSlots())
+                    return super.extractItem(slot, amount, simulate);
+                else
+                    return ItemStack.EMPTY;
+            }
+
+            @Override
+            public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+                if (!level.isClientSide()) {
+                    RackBlockEntity rack = network.getType(RackBlockEntity.class);
+                    AtomicBoolean returnValue = new AtomicBoolean(false);
+                    if (rack != null){
+                        rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
+                            for (int i = 0; i < h.getSlots(); i++){
+                                ItemStack drive = h.getStackInSlot(i);
+                                if (!drive.isEmpty()){
+                                    CompoundTag tag = drive.getOrCreateTag();
+                                    Set<String> keys = tag.getAllKeys();
+                                    if (keys.size() < Drive.CAPACITY){
+                                        returnValue.set(true);
+                                        break;
+                                    } else {
+                                        for (String key : keys) {
+                                            if (key.equals(Registry.ITEM.getKey(stack.getItem()).toString())){
+                                                returnValue.set(true);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        return returnValue.get();
+                    } else {
+                        return returnValue.get();
+                    }
+                }
+                return super.isItemValid(slot, stack);
             }
         };
     }

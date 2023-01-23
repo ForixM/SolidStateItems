@@ -2,6 +2,9 @@ package ma.forix.ssi.mixin;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import ma.forix.ssi.blocks.Networkable;
+import ma.forix.ssi.blocks.blockentities.TerminalBlockEntity;
+import ma.forix.ssi.blocks.blockentities.TerminalContainer;
 import net.minecraft.network.TickablePacketListener;
 import net.minecraft.network.protocol.PacketUtils;
 import net.minecraft.network.protocol.game.ServerGamePacketListener;
@@ -12,6 +15,8 @@ import net.minecraft.server.network.ServerPlayerConnection;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.items.CapabilityItemHandler;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,6 +31,8 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerPlayerC
     @Shadow public ServerPlayer player;
 
     @Shadow @Final private static Logger LOGGER;
+
+    @Shadow public abstract ServerPlayer getPlayer();
 
     @Inject(at = @At("HEAD"), method="Lnet/minecraft/server/network/ServerGamePacketListenerImpl;handleContainerClick(Lnet/minecraft/network/protocol/game/ServerboundContainerClickPacket;)V", cancellable = true)
     private void handleContainerClick(ServerboundContainerClickPacket pPacket, CallbackInfo info){
@@ -44,14 +51,17 @@ public abstract class MixinServerGamePacketListenerImpl implements ServerPlayerC
                     boolean flag = pPacket.getStateId() != this.player.containerMenu.getStateId();
                     this.player.containerMenu.suppressRemoteUpdates();
                     this.player.containerMenu.clicked(i, pPacket.getButtonNum(), pPacket.getClickType(), this.player);
-                    if (pPacket.getClickType() == ClickType.PICKUP && i >= 0) {
-                        Slot slot = this.player.containerMenu.slots.get(i);
+                    if (pPacket.getClickType() == ClickType.PICKUP && i >= 0 && this.player.containerMenu instanceof TerminalContainer terminalContainer) {
+                        Slot slot = terminalContainer.slots.get(i);
                         ItemStack slotStack = slot.getItem();
-                        ItemStack carryStack = this.player.containerMenu.getCarried();
-                        if (i < 4 && !slotStack.isEmpty() && !carryStack.isEmpty() && !slotStack.sameItem(carryStack)) {
-                            this.player.containerMenu.setCarried(ItemStack.EMPTY);
-                            this.player.containerMenu.setRemoteCarried(ItemStack.EMPTY);
-                        }
+                        ItemStack carryStack = terminalContainer.getCarried();
+                        TerminalBlockEntity be = (TerminalBlockEntity) terminalContainer.getBlockEntity();
+                        be.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
+                            if (i < h.getSlots() && !slotStack.isEmpty() && !carryStack.isEmpty() && !slotStack.sameItem(carryStack)) {
+                                this.player.containerMenu.setCarried(ItemStack.EMPTY);
+                                this.player.containerMenu.setRemoteCarried(ItemStack.EMPTY);
+                            }
+                        });
                     }
 
                     for(Int2ObjectMap.Entry<ItemStack> entry : Int2ObjectMaps.fastIterable(pPacket.getChangedSlots())) {

@@ -16,6 +16,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.CapabilityItemHandler;
 
 import java.util.List;
 
@@ -48,16 +49,19 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalContainer> {
             pSlotId = pSlot.index;
         }
         this.minecraft.gameMode.handleInventoryMouseClick(this.menu.containerId, pSlotId, pMouseButton, pType, this.minecraft.player);
-        if (pType == ClickType.PICKUP && pSlotId >= 0) {
-            Slot slot = this.minecraft.player.containerMenu.slots.get(pSlotId);
+        if (pType == ClickType.PICKUP && pSlotId >= 0 && this.minecraft.player.containerMenu instanceof TerminalContainer terminalContainer) {
+            Slot slot = terminalContainer.slots.get(pSlotId);
             ItemStack slotStack = slot.getItem();
-            ItemStack carryStack = this.minecraft.player.containerMenu.getCarried();
-            if (pSlotId >= 0 && pSlotId < 4 && !slotStack.isEmpty() && !carryStack.isEmpty() && !slotStack.sameItem(carryStack)) {
-                this.minecraft.player.containerMenu.setCarried(ItemStack.EMPTY);
-                this.minecraft.player.containerMenu.setRemoteCarried(ItemStack.EMPTY);
-            }
+            ItemStack carryStack = terminalContainer.getCarried();
+            TerminalBlockEntity be = (TerminalBlockEntity) terminalContainer.getBlockEntity();
+            int slotId = pSlotId;
+            be.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
+                if (slotId < h.getSlots() && !slotStack.isEmpty() && !carryStack.isEmpty() && !slotStack.sameItem(carryStack)) {
+                    this.minecraft.player.containerMenu.setCarried(ItemStack.EMPTY);
+                    this.minecraft.player.containerMenu.setRemoteCarried(ItemStack.EMPTY);
+                }
+            });
         }
-
 //        super.slotClicked(pSlot, pSlotId, pMouseButton, pType);
     }
 }
