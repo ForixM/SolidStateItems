@@ -74,10 +74,10 @@ public class TerminalBlockEntity extends Networkable {
                                 ItemStack drive = h.getStackInSlot(i);
                                 if (!drive.isEmpty()) {
                                     CompoundTag tag = drive.getOrCreateTag();
+                                    Set<String> keys = tag.getAllKeys();
                                     ItemStack merged = mergeOrNull(tag, stack);
-                                    if (merged == null) {
-                                        Set<String> keys = tag.getAllKeys();
-                                        if (keys.size() < Drive.CAPACITY) {
+                                    if (keys.size() < Drive.CAPACITY) {
+                                        if (merged == null) {
                                             int index = 0;
                                             while (tag.contains(Integer.toString(index))) {
                                                 index++;
@@ -93,11 +93,11 @@ public class TerminalBlockEntity extends Networkable {
                                             if (stack.getTag() != null)
                                                 itemTag.put("tag", stack.getTag());
                                             tag.put(res.toString(), itemTag);
-                                            System.out.println("written tag: "+tag);
+                                            System.out.println("written tag: " + tag);
                                             break;
                                         }
+                                        break;
                                     }
-                                    break;
                                 }
                             }
                         });
