@@ -8,10 +8,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -24,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TerminalBlockEntity extends Networkable {
     private final ItemStackHandler itemHandler = createHandler();
@@ -67,40 +73,45 @@ public class TerminalBlockEntity extends Networkable {
                 System.out.println("item inserted, slot=" + slot + ", stack=" + stack + ", simulate=" + simulate + ", client side: "+level.isClientSide());
                 if (!level.isClientSide()) //slot, stack, simulate=true
                 {
-                    RackBlockEntity rack = network.getType(RackBlockEntity.class);
-                    if (rack != null){
-                        rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
-                            for (int i = 0; i < h.getSlots(); i++) {
-                                ItemStack drive = h.getStackInSlot(i);
-                                if (!drive.isEmpty()) {
-                                    CompoundTag tag = drive.getOrCreateTag();
-                                    Set<String> keys = tag.getAllKeys();
-                                    ItemStack merged = mergeOrNull(tag, stack);
-                                    if (keys.size() < Drive.CAPACITY) {
-                                        if (merged == null) {
-                                            int index = 0;
-                                            while (tag.contains(Integer.toString(index))) {
-                                                index++;
+                    List<RackBlockEntity> racks = network.getType(RackBlockEntity.class);
+                    AtomicBoolean workDone = new AtomicBoolean(false);
+                    if (!racks.isEmpty()){
+                        for (RackBlockEntity rack : racks) {
+                            rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
+                                for (int i = 0; i < h.getSlots(); i++) {
+                                    ItemStack drive = h.getStackInSlot(i);
+                                    if (!drive.isEmpty()) {
+                                        CompoundTag tag = drive.getOrCreateTag();
+                                        Set<String> keys = tag.getAllKeys();
+                                        ItemStack merged = mergeOrNull(tag, stack);
+                                        if (keys.size() < Drive.CAPACITY) {
+                                            if (merged == null) {
+                                                int index = 0;
+                                                while (tag.contains(Integer.toString(index))) {
+                                                    index++;
+                                                }
+                                                ResourceLocation res = Registry.ITEM.getKey(stack.getItem());
+                                                CompoundTag itemTag = new CompoundTag();
+                                                int prevCount = 0;
+                                                if (tag.contains(res.toString())) {
+                                                    CompoundTag subTag = tag.getCompound(res.toString());
+                                                    prevCount = subTag.getInt("count");
+                                                }
+                                                itemTag.putInt("count", stack.getCount() + prevCount);
+                                                if (stack.getTag() != null)
+                                                    itemTag.put("tag", stack.getTag());
+                                                tag.put(res.toString(), itemTag);
+                                                System.out.println("written tag: " + tag);
                                             }
-                                            ResourceLocation res = Registry.ITEM.getKey(stack.getItem());
-                                            CompoundTag itemTag = new CompoundTag();
-                                            int prevCount = 0;
-                                            if (tag.contains(res.toString())) {
-                                                CompoundTag subTag = tag.getCompound(res.toString());
-                                                prevCount = subTag.getInt("count");
-                                            }
-                                            itemTag.putInt("count", stack.getCount() + prevCount);
-                                            if (stack.getTag() != null)
-                                                itemTag.put("tag", stack.getTag());
-                                            tag.put(res.toString(), itemTag);
-                                            System.out.println("written tag: " + tag);
+                                            workDone.set(true);
                                             break;
                                         }
-                                        break;
                                     }
                                 }
-                            }
-                        });
+                            });
+                            if (workDone.get())
+                                break;
+                        }
                     }
                 }
                 //Base code slightly modified
@@ -138,30 +149,32 @@ public class TerminalBlockEntity extends Networkable {
                 if (!level.isClientSide() && !simulate) //slot, amount extracted, simulate=false
                 {
                     System.out.println("Item extracted, slot=" + slot + ", amout=" + amount + ", simulate=" + simulate);
-                    RackBlockEntity rack = network.getType(RackBlockEntity.class);
-                    if (rack != null){
-                        rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
-                            int am = Math.min(amount, 64);
-                            for (int i = 0; i < h.getSlots();i++){
-                                ItemStack drive = h.getStackInSlot(i);
-                                if (!drive.isEmpty()) {
-                                    CompoundTag tag = drive.getOrCreateTag();
-                                    ItemStack toExtract = getStackInSlot(slot);
-                                    String key = Registry.ITEM.getKey(toExtract.getItem()).toString();
-                                    if (tag.contains(key)) {
-                                        CompoundTag itemTag = (CompoundTag) tag.get(key);
-                                        int savedCount = itemTag.getInt("count");
-                                        if (savedCount <= am) {
-                                            tag.remove(key);
-                                        } else {
-                                            itemTag.putInt("count", (savedCount - am));
-                                            tag.put(key, itemTag);
+                    List<RackBlockEntity> racks = network.getType(RackBlockEntity.class);
+                    if (!racks.isEmpty()){
+                        for (RackBlockEntity rack : racks) {
+                            rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
+                                for (int i = 0; i < h.getSlots();i++){
+                                    ItemStack drive = h.getStackInSlot(i);
+                                    if (!drive.isEmpty()) {
+                                        CompoundTag tag = drive.getOrCreateTag();
+                                        ItemStack toExtract = getStackInSlot(slot);
+                                        int am = Math.min(amount, toExtract.getItem().getMaxStackSize());
+                                        String key = Registry.ITEM.getKey(toExtract.getItem()).toString();
+                                        if (tag.contains(key)) {
+                                            CompoundTag itemTag = (CompoundTag) tag.get(key);
+                                            int savedCount = itemTag.getInt("count");
+                                            if (savedCount <= am) {
+                                                tag.remove(key);
+                                            } else {
+                                                itemTag.putInt("count", (savedCount - am));
+                                                tag.put(key, itemTag);
+                                            }
+                                            break;
                                         }
-                                        break;
                                     }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                 }
                 if (slot < getSlots())
@@ -170,36 +183,37 @@ public class TerminalBlockEntity extends Networkable {
                     return ItemStack.EMPTY;
             }
 
+            @SuppressWarnings("removal")
             @Override
             public boolean isItemValid(int slot, @NotNull ItemStack stack) {
                 if (!level.isClientSide()) {
-                    RackBlockEntity rack = network.getType(RackBlockEntity.class);
+                    List<RackBlockEntity> racks = network.getType(RackBlockEntity.class);
                     AtomicBoolean returnValue = new AtomicBoolean(false);
-                    if (rack != null){
-                        rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
-                            for (int i = 0; i < h.getSlots(); i++){
-                                ItemStack drive = h.getStackInSlot(i);
-                                if (!drive.isEmpty()){
-                                    CompoundTag tag = drive.getOrCreateTag();
-                                    Set<String> keys = tag.getAllKeys();
-                                    if (keys.size() < Drive.CAPACITY){
-                                        returnValue.set(true);
-                                        break;
-                                    } else {
-                                        for (String key : keys) {
-                                            if (key.equals(Registry.ITEM.getKey(stack.getItem()).toString())){
-                                                returnValue.set(true);
-                                                break;
+                    if (!racks.isEmpty()){
+                        for (RackBlockEntity rack : racks) {
+                            rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
+                                for (int i = 0; i < h.getSlots(); i++){
+                                    ItemStack drive = h.getStackInSlot(i);
+                                    if (!drive.isEmpty()){
+                                        CompoundTag tag = drive.getOrCreateTag();
+                                        Set<String> keys = tag.getAllKeys();
+                                        if (keys.size() < Drive.CAPACITY){
+                                            returnValue.set(true);
+                                            break;
+                                        } else {
+                                            for (String key : keys) {
+                                                if (key.equals(Registry.ITEM.getKey(stack.getItem()).toString())){
+                                                    returnValue.set(true);
+                                                    break;
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
-                        });
-                        return returnValue.get();
-                    } else {
-                        return returnValue.get();
+                            });
+                        }
                     }
+                    return returnValue.get();
                 }
                 return super.isItemValid(slot, stack);
             }
@@ -232,45 +246,47 @@ public class TerminalBlockEntity extends Networkable {
     @Override
     public void tickServer(Level level) {
         super.tickServer(level);
-        RackBlockEntity rack = network.getType(RackBlockEntity.class);
-        if (rack != null){
-            rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
-                List<ItemStack> items = new ArrayList<>();
-                boolean foundDisk = false;
-                for (int slot = 0; slot < h.getSlots(); slot++){
-                    ItemStack drive = h.getStackInSlot(slot);
-                    if (!drive.isEmpty()){
-                        foundDisk = true;
-                        CompoundTag tag = drive.getOrCreateTag();
-                        for (String key : tag.getAllKeys()) {
-                            ItemStack stack = getConvertibleTag(key, tag.getCompound(key));
-                            int i;
-                            for (i = 0; i < items.size(); i++) {
-                                if (items.get(i).sameItem(stack)){
-                                    items.get(i).grow(stack.getCount());
-                                    break;
+        List<RackBlockEntity> racks = network.getType(RackBlockEntity.class);
+        if (!racks.isEmpty()){
+            AtomicInteger counter = new AtomicInteger();
+            for (RackBlockEntity rack : racks) {
+                rack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent((h) -> {
+                    List<ItemStack> items = new ArrayList<>();
+                    boolean foundDisk = false;
+                    for (int slot = 0; slot < h.getSlots(); slot++){
+                        ItemStack drive = h.getStackInSlot(slot);
+                        if (!drive.isEmpty()){
+                            foundDisk = true;
+                            CompoundTag tag = drive.getOrCreateTag();
+                            for (String key : tag.getAllKeys()) {
+                                ItemStack stack = getConvertibleTag(key, tag.getCompound(key));
+                                int i;
+                                for (i = 0; i < items.size(); i++) {
+                                    if (items.get(i).sameItem(stack)){
+                                        items.get(i).grow(stack.getCount());
+                                        break;
+                                    }
                                 }
-                            }
-                            if (i == items.size()){
-                                items.add(stack);
+                                if (i == items.size()){
+                                    items.add(stack);
+                                }
                             }
                         }
                     }
-                }
-                if (!foundDisk){
-                    for (int i = 0; i < itemHandler.getSlots(); i++){
-                        itemHandler.setStackInSlot(i, ItemStack.EMPTY);
+                    if (!foundDisk){
+                        for (int i = 0; i < itemHandler.getSlots(); i++){
+                            itemHandler.setStackInSlot(i, ItemStack.EMPTY);
+                        }
+                    } else {
+                        for (int a = counter.get(); a < itemHandler.getSlots(); a++){
+                            itemHandler.setStackInSlot(a, ItemStack.EMPTY);
+                        }
+                        for (ItemStack item : items) {
+                            itemHandler.setStackInSlot(counter.getAndIncrement(), item);
+                        }
                     }
-                } else {
-                    int i = 0;
-                    for (int a = 0; a < itemHandler.getSlots(); a++){
-                        itemHandler.setStackInSlot(a, ItemStack.EMPTY);
-                    }
-                    for (ItemStack item : items) {
-                        itemHandler.setStackInSlot(i++, item);
-                    }
-                }
-            });
+                });
+            }
         } else {
             for (int i = 0; i < itemHandler.getSlots(); i++){
                 itemHandler.setStackInSlot(i, ItemStack.EMPTY);

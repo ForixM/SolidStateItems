@@ -41,10 +41,6 @@ public class TerminalContainer extends AbstractContainerMenu {
                     x = 8;
                     y+=18;
                 }
-//                addSlot(new CustomSlotItemHandler(h, 0, 8, 30));
-//                addSlot(new CustomSlotItemHandler(h, 1, 26, 30));
-//                addSlot(new CustomSlotItemHandler(h, 2, 8, 48));
-//                addSlot(new CustomSlotItemHandler(h, 3, 26, 48));
             });
         }
         layoutPlayerInventorySlots(8, 84);
@@ -174,9 +170,9 @@ public class TerminalContainer extends AbstractContainerMenu {
                                 h.insertItem(finalI1, itemcopy, true);
                         });
                     }
-                    System.out.println("3");
-                    if (pStack.getCount() > slot1.getMaxStackSize()) {
-                        slot1.set(pStack.split(slot1.getMaxStackSize()));
+                    System.out.println("3: "+slot1.getMaxStackSize());
+                    if (pStack.getCount() > pStack.getItem().getMaxStackSize()) {
+                        slot1.set(pStack.split(pStack.getItem().getMaxStackSize()));
                     } else {
                         slot1.set(pStack.split(pStack.getCount()));
                     }

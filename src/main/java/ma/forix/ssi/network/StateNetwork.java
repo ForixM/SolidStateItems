@@ -34,13 +34,14 @@ public class StateNetwork {
         }
     }
 
-    public RackBlockEntity getType(Class<RackBlockEntity> element){
+    public <T extends Networkable> List<T> getType(Class<T> element){
+        List<T> toReturn = new ArrayList<>();
         for (Networkable networkable : elements) {
             if (element.isInstance(networkable)){
-                return (RackBlockEntity) networkable;
+                toReturn.add((T) networkable);
             }
         }
-        return null;
+        return toReturn;
     }
 
     public void AddElement(Networkable element){

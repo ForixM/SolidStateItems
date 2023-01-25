@@ -1,6 +1,8 @@
 {
   "block.ssi.rack_block": "Rack",
   "block.ssi.terminal": "Terminal",
+  "block.ssi.crafter": "Crafter",
   "block.ssi.cable": "Cable",
-  "item.ssi.drive": "Drive"
+  "item.ssi.drive": "Drive",
+  "item.ssi.craft_starter": "Craft starter"
 }

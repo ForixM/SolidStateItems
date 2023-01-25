@@ -1,9 +1,11 @@
 package ma.forix.ssi;
 
 import ma.forix.ssi.blocks.Cable;
+import ma.forix.ssi.blocks.CrafterBlock;
 import ma.forix.ssi.blocks.RackBlock;
 import ma.forix.ssi.blocks.TerminalBlock;
 import ma.forix.ssi.blocks.blockentities.*;
+import ma.forix.ssi.items.CraftStarter;
 import ma.forix.ssi.items.Drive;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
@@ -43,10 +45,12 @@ public class Registration {
     public static final RegistryObject<RackBlock> RACK_BLOCK = registerBlock("rack_block", RackBlock::new);
     public static final RegistryObject<TerminalBlock> TERMINAL_BLOCK = registerBlock("terminal", TerminalBlock::new);
     public static final RegistryObject<Cable> CABLE = registerBlock("cable", Cable::new);
+    public static final RegistryObject<CrafterBlock> CRAFTER = registerBlock("crafter", CrafterBlock::new);
 
 
     //ITEMS
     public static final RegistryObject<Drive> DRIVE = ITEMS.register("drive", Drive::new);
+    public static final RegistryObject<CraftStarter> CRAFT_STARTER = ITEMS.register("craft_starter", CraftStarter::new);
 
 
     //BLOCK ENTITIES
@@ -56,6 +60,8 @@ public class Registration {
             () -> BlockEntityType.Builder.of(TerminalBlockEntity::new, TERMINAL_BLOCK.get()).build(null));
     public static final RegistryObject<BlockEntityType<CableBlockEntity>> CABLE_BLOCK_ENTITY = BLOCKS_ENTITIES.register("cable",
             () -> BlockEntityType.Builder.of(CableBlockEntity::new, CABLE.get()).build(null));
+    public static final RegistryObject<BlockEntityType<CrafterBlockEntity>> CRAFTER_BLOCK_ENTITY = BLOCKS_ENTITIES.register("crafter",
+            () -> BlockEntityType.Builder.of(CrafterBlockEntity::new, CABLE.get()).build(null));
 
 
     //CONTAINERS
