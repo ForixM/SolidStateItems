@@ -1,5 +1,6 @@
 package ma.forix.ssi.blocks;
 
+import ma.forix.ssi.blocks.blockentities.NetworkableBE;
 import ma.forix.ssi.blocks.blockentities.RackBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -30,7 +31,7 @@ public abstract class NetworkableBlock extends Block implements EntityBlock {
             return null;
         }
         return (lvl, pos, blockState, t) -> {
-            if (t instanceof RackBlockEntity tile){
+            if (t instanceof NetworkableBE tile){
                 tile.tickServer(level);
             }
         };
