@@ -27,10 +27,10 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
-public class RackBlock extends Block implements EntityBlock {
+public class RackBlock extends NetworkableBlock {
 
     public RackBlock() {
-        super(BlockBehaviour.Properties.of(Material.STONE));
+        super();
     }
 
     @Override
@@ -55,18 +55,18 @@ public class RackBlock extends Block implements EntityBlock {
         return new RackBlockEntity(pPos, pState);
     }
 
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide()) {
-            return null;
-        }
-        return (lvl, pos, blockState, t) -> {
-            if (t instanceof RackBlockEntity tile){
-                tile.tickServer(level);
-            }
-        };
-    }
+//    @Nullable
+//    @Override
+//    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+//        if (level.isClientSide()) {
+//            return null;
+//        }
+//        return (lvl, pos, blockState, t) -> {
+//            if (t instanceof RackBlockEntity tile){
+//                tile.tickServer(level);
+//            }
+//        };
+//    }
 
     @SuppressWarnings("deprecation")
     @Override

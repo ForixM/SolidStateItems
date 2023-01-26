@@ -2,7 +2,6 @@ package ma.forix.ssi.mixin;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
-import ma.forix.ssi.blocks.Networkable;
 import ma.forix.ssi.blocks.blockentities.TerminalBlockEntity;
 import ma.forix.ssi.blocks.blockentities.TerminalContainer;
 import net.minecraft.network.TickablePacketListener;
@@ -15,7 +14,6 @@ import net.minecraft.server.network.ServerPlayerConnection;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.CapabilityItemHandler;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;

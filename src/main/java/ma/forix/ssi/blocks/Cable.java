@@ -16,9 +16,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
 
-public class Cable extends Block implements EntityBlock {
+public class Cable extends NetworkableBlock {
     public Cable() {
-        super(BlockBehaviour.Properties.of(Material.STONE));
+        super();
     }
 
     @Nullable
@@ -32,16 +32,16 @@ public class Cable extends Block implements EntityBlock {
         return RenderShape.MODEL;
     }
 
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState pState, BlockEntityType<T> pBlockEntityType) {
-        if (level.isClientSide()) {
-            return null;
-        }
-        return (lvl, pos, blockState, t) -> {
-            if (t instanceof CableBlockEntity tile){
-                tile.tickServer(level);
-            }
-        };
-    }
+//    @Nullable
+//    @Override
+//    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState pState, BlockEntityType<T> pBlockEntityType) {
+//        if (level.isClientSide()) {
+//            return null;
+//        }
+//        return (lvl, pos, blockState, t) -> {
+//            if (t instanceof CableBlockEntity tile){
+//                tile.tickServer(level);
+//            }
+//        };
+//    }
 }

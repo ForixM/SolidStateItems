@@ -1,9 +1,6 @@
 package ma.forix.ssi;
 
-import ma.forix.ssi.blocks.Cable;
-import ma.forix.ssi.blocks.CrafterBlock;
-import ma.forix.ssi.blocks.RackBlock;
-import ma.forix.ssi.blocks.TerminalBlock;
+import ma.forix.ssi.blocks.*;
 import ma.forix.ssi.blocks.blockentities.*;
 import ma.forix.ssi.items.CraftStarter;
 import ma.forix.ssi.items.Drive;
@@ -46,6 +43,7 @@ public class Registration {
     public static final RegistryObject<TerminalBlock> TERMINAL_BLOCK = registerBlock("terminal", TerminalBlock::new);
     public static final RegistryObject<Cable> CABLE = registerBlock("cable", Cable::new);
     public static final RegistryObject<CrafterBlock> CRAFTER = registerBlock("crafter", CrafterBlock::new);
+    public static final RegistryObject<CraftOrderer> CRAFT_ORDERER = registerBlock("craft_orderer", CraftOrderer::new);
 
 
     //ITEMS
@@ -61,7 +59,10 @@ public class Registration {
     public static final RegistryObject<BlockEntityType<CableBlockEntity>> CABLE_BLOCK_ENTITY = BLOCKS_ENTITIES.register("cable",
             () -> BlockEntityType.Builder.of(CableBlockEntity::new, CABLE.get()).build(null));
     public static final RegistryObject<BlockEntityType<CrafterBlockEntity>> CRAFTER_BLOCK_ENTITY = BLOCKS_ENTITIES.register("crafter",
-            () -> BlockEntityType.Builder.of(CrafterBlockEntity::new, CABLE.get()).build(null));
+            () -> BlockEntityType.Builder.of(CrafterBlockEntity::new, CRAFTER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<CraftOrdererBlockEntity>> CRAFT_ORDERER_BLOCK_ENTITY = BLOCKS_ENTITIES.register("craft_orderer",
+            () -> BlockEntityType.Builder.of(CraftOrdererBlockEntity::new, CRAFT_ORDERER.get()).build(null));
 
 
     //CONTAINERS

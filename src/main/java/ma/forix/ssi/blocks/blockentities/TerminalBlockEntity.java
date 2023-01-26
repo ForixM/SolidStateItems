@@ -1,22 +1,17 @@
 package ma.forix.ssi.blocks.blockentities;
 
 import ma.forix.ssi.Registration;
-import ma.forix.ssi.blocks.Networkable;
+import ma.forix.ssi.items.CraftStarter;
 import ma.forix.ssi.items.Drive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.CraftingContainer;
-import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -31,7 +26,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TerminalBlockEntity extends Networkable {
+public class TerminalBlockEntity extends NetworkableBE {
     private final ItemStackHandler itemHandler = createHandler();
     private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
 
@@ -73,6 +68,17 @@ public class TerminalBlockEntity extends Networkable {
                 System.out.println("item inserted, slot=" + slot + ", stack=" + stack + ", simulate=" + simulate + ", client side: "+level.isClientSide());
                 if (!level.isClientSide()) //slot, stack, simulate=true
                 {
+                    if (stack.getItem() instanceof CraftStarter){
+                        List<CrafterBlockEntity> crafters = network.getType(CrafterBlockEntity.class);
+                        if (crafters.isEmpty()){
+                            System.out.println("Crafter not found");
+                        } else {
+                            for (CrafterBlockEntity crafter : crafters) {
+                                System.out.println("found crafter: "+crafter);
+//                                crafter.craft();
+                            }
+                        }
+                    }
                     List<RackBlockEntity> racks = network.getType(RackBlockEntity.class);
                     AtomicBoolean workDone = new AtomicBoolean(false);
                     if (!racks.isEmpty()){

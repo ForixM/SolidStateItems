@@ -1,7 +1,6 @@
-package ma.forix.ssi.blocks;
+package ma.forix.ssi.blocks.blockentities;
 
 import ma.forix.ssi.network.StateNetwork;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -12,10 +11,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Networkable extends BlockEntity {
+public abstract class NetworkableBE extends BlockEntity {
     protected StateNetwork network;
 
-    public Networkable(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
+    public NetworkableBE(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
         super(pType, pPos, pBlockState);
     }
 
@@ -29,10 +28,11 @@ public abstract class Networkable extends BlockEntity {
 
     public void tickServer(Level level){
         if (network == null) {
-            List<Networkable> nearbyNetworks = new ArrayList<>();
+            System.out.println("no network");
+            List<NetworkableBE> nearbyNetworks = new ArrayList<>();
             for (final var direction : Direction.values()) {
                 BlockEntity be = level.getBlockEntity(this.worldPosition.relative(direction));
-                if (be instanceof Networkable el && el.network != null) {
+                if (be instanceof NetworkableBE el && el.network != null) {
                     nearbyNetworks.add(el);
 //                    this.network = el.getNetwork();
                 }

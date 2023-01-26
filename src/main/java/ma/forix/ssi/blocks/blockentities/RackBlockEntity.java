@@ -1,7 +1,6 @@
 package ma.forix.ssi.blocks.blockentities;
 
 import ma.forix.ssi.Registration;
-import ma.forix.ssi.blocks.Networkable;
 import ma.forix.ssi.items.Drive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,7 +16,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RackBlockEntity extends Networkable {
+public class RackBlockEntity extends NetworkableBE {
 
     private final ItemStackHandler itemHandler = createHandler();
 
